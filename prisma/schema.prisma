@@ -1,0 +1,206 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(cuid())
+  totpSecret  String?
+  totpEnabled Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+
+model AppSetting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+}
+
+model AccountType {
+  id       String    @id @default(cuid())
+  name     String
+  icon     String    @default("wallet")
+  isActive Boolean   @default(true)
+  accounts Account[]
+}
+
+model Account {
+  id        String      @id @default(cuid())
+  name      String
+  typeId    String
+  type      AccountType @relation(fields: [typeId], references: [id])
+  balance   Float       @default(0)
+  currency  String      @default("INR")
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  expenses  Expense[]
+  incomes   Income[]
+}
+
+model ExpenseCategory {
+  id       String    @id @default(cuid())
+  name     String
+  color    String    @default("#6366f1")
+  isActive Boolean   @default(true)
+  expenses Expense[]
+}
+
+model Expense {
+  id         String          @id @default(cuid())
+  amount     Float
+  date       DateTime
+  categoryId String
+  category   ExpenseCategory @relation(fields: [categoryId], references: [id])
+  accountId  String
+  account    Account         @relation(fields: [accountId], references: [id])
+  note       String?
+  createdAt  DateTime        @default(now())
+}
+
+model IncomeCategory {
+  id       String   @id @default(cuid())
+  name     String
+  color    String   @default("#22c55e")
+  isActive Boolean  @default(true)
+  incomes  Income[]
+}
+
+model Income {
+  id         String         @id @default(cuid())
+  amount     Float
+  date       DateTime
+  categoryId String
+  category   IncomeCategory @relation(fields: [categoryId], references: [id])
+  accountId  String
+  account    Account        @relation(fields: [accountId], references: [id])
+  note       String?
+  createdAt  DateTime       @default(now())
+}
+
+model AssetType {
+  id       String  @id @default(cuid())
+  name     String
+  isActive Boolean @default(true)
+  assets   Asset[]
+}
+
+model Asset {
+  id           String    @id @default(cuid())
+  name         String
+  typeId       String
+  type         AssetType @relation(fields: [typeId], references: [id])
+  currentValue Float
+  valuedAt     DateTime  @default(now())
+  location     String?
+  note         String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model NpsAccount {
+  id        String   @id @default(cuid())
+  pran      String
+  tier      String   @default("Tier I")
+  balance   Float    @default(0)
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model EpfAccount {
+  id              String   @id @default(cuid())
+  uan             String
+  employeeBalance Float    @default(0)
+  employerBalance Float    @default(0)
+  note            String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model InsurancePolicy {
+  id           String    @id @default(cuid())
+  provider     String
+  policyNumber String
+  type         String
+  premium      Float
+  frequency    String    @default("yearly")
+  coverage     Float
+  startDate    DateTime
+  endDate      DateTime?
+  note         String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model TermPolicy {
+  id           String    @id @default(cuid())
+  provider     String
+  policyNumber String
+  premium      Float
+  frequency    String    @default("yearly")
+  sumAssured   Float
+  startDate    DateTime
+  endDate      DateTime?
+  note         String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Investment {
+  id             String   @id @default(cuid())
+  type           String
+  name           String
+  symbol         String?
+  units          Float    @default(0)
+  investedAmount Float    @default(0)
+  currentValue   Float    @default(0)
+  platform       String?
+  note           String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Loan {
+  id                 String    @id @default(cuid())
+  type               String
+  lender             String
+  principal          Float
+  outstandingBalance Float
+  interestRate       Float     @default(0)
+  emi                Float     @default(0)
+  startDate          DateTime
+  endDate            DateTime?
+  note               String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+}
+
+model CreditCard {
+  id                 String   @id @default(cuid())
+  name               String
+  bank               String
+  lastFourDigits     String?
+  creditLimit        Float    @default(0)
+  outstandingBalance Float    @default(0)
+  statementDay       Int?
+  dueDay             Int?
+  note               String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model OverdraftAccount {
+  id             String   @id @default(cuid())
+  name           String
+  bank           String
+  limit          Float    @default(0)
+  utilizedAmount Float    @default(0)
+  interestRate   Float    @default(0)
+  note           String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
