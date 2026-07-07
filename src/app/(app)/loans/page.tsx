@@ -17,6 +17,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import {
+  LOAN_TYPES,
+  LOAN_TYPE_LABELS,
+  LOAN_TYPE_TAB_LABELS,
+  formatLoanType,
+  type LoanType,
+} from "@/lib/finance-types";
 import { Pencil, Trash2, Plus } from "lucide-react";
 
 interface Loan {
@@ -33,12 +40,12 @@ interface Loan {
 }
 
 export default function LoansPage() {
-  const [filter, setFilter] = useState<"all" | "home" | "personal" | "car" | "other">("all");
+  const [filter, setFilter] = useState<"all" | LoanType>("all");
   const [loans, setLoans] = useState<Loan[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Loan | null>(null);
   const [form, setForm] = useState({
-    type: "home",
+    type: "home" as LoanType,
     lender: "",
     principal: "",
     outstandingBalance: "",
@@ -111,7 +118,7 @@ export default function LoansPage() {
   function startEdit(loan: Loan) {
     setEditing(loan);
     setForm({
-      type: loan.type,
+      type: loan.type as LoanType,
       lender: loan.lender,
       principal: String(loan.principal),
       outstandingBalance: String(loan.outstandingBalance),
@@ -146,10 +153,11 @@ export default function LoansPage() {
       <Tabs value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
         <TabsList>
           <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="home">Home</TabsTrigger>
-          <TabsTrigger value="personal">Personal</TabsTrigger>
-          <TabsTrigger value="car">Car</TabsTrigger>
-          <TabsTrigger value="other">Other</TabsTrigger>
+          {LOAN_TYPES.map((type) => (
+            <TabsTrigger key={type} value={type}>
+              {LOAN_TYPE_TAB_LABELS[type]}
+            </TabsTrigger>
+          ))}
         </TabsList>
       </Tabs>
 
@@ -162,11 +170,15 @@ export default function LoansPage() {
             <form onSubmit={handleSubmit} className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label>Type</Label>
-                <Select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
-                  <option value="home">Home Loan</option>
-                  <option value="personal">Personal Loan</option>
-                  <option value="car">Car Loan</option>
-                  <option value="other">Other</option>
+                <Select
+                  value={form.type}
+                  onChange={(e) => setForm({ ...form, type: e.target.value as LoanType })}
+                >
+                  {LOAN_TYPES.map((type) => (
+                    <option key={type} value={type}>
+                      {LOAN_TYPE_LABELS[type]}
+                    </option>
+                  ))}
                 </Select>
               </div>
               <div className="space-y-2">
@@ -230,7 +242,7 @@ export default function LoansPage() {
               <TableBody>
                 {loans.map((loan) => (
                   <TableRow key={loan.id}>
-                    <TableCell className="capitalize">{loan.type}</TableCell>
+                    <TableCell>{formatLoanType(loan.type)}</TableCell>
                     <TableCell className="font-medium">{loan.lender}</TableCell>
                     <TableCell className="text-right">{formatCurrency(loan.outstandingBalance)}</TableCell>
                     <TableCell className="text-right">{formatCurrency(loan.emi)}</TableCell>

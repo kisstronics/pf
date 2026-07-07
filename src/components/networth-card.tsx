@@ -2,24 +2,30 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, cn } from "@/lib/utils";
+import { NETWORTH_CATEGORY_LABELS, type NetWorthCategoryKey } from "@/lib/networth-settings";
 import { TrendingUp } from "lucide-react";
 
 interface NetWorthData {
   total: number;
   assets: number;
   liabilities: number;
-  breakdown: {
-    accounts: number;
-    assets: number;
-    nps: number;
-    epf: number;
-    investments: number;
-    loans: number;
-    creditCards: number;
-    overdraft: number;
-  };
+  excluded: NetWorthCategoryKey[];
+  breakdown: Record<NetWorthCategoryKey, number>;
 }
+
+const BREAKDOWN_ORDER: NetWorthCategoryKey[] = [
+  "accounts",
+  "assets",
+  "investments",
+  "nps",
+  "epf",
+  "loans",
+  "creditCards",
+  "overdraft",
+];
+
+const LIABILITY_KEYS = new Set<NetWorthCategoryKey>(["loans", "creditCards", "overdraft"]);
 
 export function NetWorthCard() {
   const [data, setData] = useState<NetWorthData | null>(null);
@@ -44,6 +50,8 @@ export function NetWorthCard() {
     );
   }
 
+  const excludedSet = new Set(data.excluded);
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -57,14 +65,22 @@ export function NetWorthCard() {
           <span className="text-destructive">Liabilities: {formatCurrency(data.liabilities)}</span>
         </div>
         <div className="mt-4 grid grid-cols-2 gap-2 text-sm text-muted-foreground">
-          <span>Accounts: {formatCurrency(data.breakdown.accounts)}</span>
-          <span>Assets: {formatCurrency(data.breakdown.assets)}</span>
-          <span>Investments: {formatCurrency(data.breakdown.investments)}</span>
-          <span>NPS: {formatCurrency(data.breakdown.nps)}</span>
-          <span>EPF: {formatCurrency(data.breakdown.epf)}</span>
-          <span>Loans: −{formatCurrency(data.breakdown.loans)}</span>
-          <span>Credit Cards: −{formatCurrency(data.breakdown.creditCards)}</span>
-          <span>Overdraft: −{formatCurrency(data.breakdown.overdraft)}</span>
+          {BREAKDOWN_ORDER.map((key) => {
+            const isExcluded = excludedSet.has(key);
+            const isLiability = LIABILITY_KEYS.has(key);
+            const value = data.breakdown[key];
+            return (
+              <span
+                key={key}
+                className={cn(isExcluded && "line-through opacity-50")}
+              >
+                {NETWORTH_CATEGORY_LABELS[key]}
+                {isExcluded ? " (excluded)" : ""}:{" "}
+                {isLiability ? "−" : ""}
+                {formatCurrency(value)}
+              </span>
+            );
+          })}
         </div>
       </CardContent>
     </Card>

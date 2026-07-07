@@ -37,48 +37,42 @@ model Account {
   currency  String      @default("INR")
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
-  expenses  Expense[]
-  incomes   Income[]
+  transactions Transaction[]
 }
 
-model ExpenseCategory {
-  id       String    @id @default(cuid())
-  name     String
-  color    String    @default("#6366f1")
-  isActive Boolean   @default(true)
-  expenses Expense[]
+// A category belongs to a single entry type ("income" or "expense").
+model Category {
+  id           String        @id @default(cuid())
+  name         String
+  type         String        @default("expense") // "income" | "expense"
+  color        String        @default("#6366f1")
+  isActive     Boolean       @default(true)
+  transactions Transaction[]
 }
 
-model Expense {
-  id         String          @id @default(cuid())
-  amount     Float
-  date       DateTime
-  categoryId String
-  category   ExpenseCategory @relation(fields: [categoryId], references: [id])
-  accountId  String
-  account    Account         @relation(fields: [accountId], references: [id])
-  note       String?
-  createdAt  DateTime        @default(now())
-}
+// A single money movement. `type` discriminates income vs expense so both
+// live in one feature. Recurring entries (e.g. salary, rent) set isRecurring
+// with a frequency and drive the dashboard's fixed income/expense figures.
+model Transaction {
+  id               String    @id @default(cuid())
+  type             String    // "income" | "expense"
+  amount           Float
+  date             DateTime
+  categoryId       String
+  category         Category  @relation(fields: [categoryId], references: [id])
+  accountId        String
+  account          Account   @relation(fields: [accountId], references: [id])
+  note             String?
+  isRecurring      Boolean   @default(false)
+  frequency        String?   // "daily" | "weekly" | "monthly" | "yearly" (when isRecurring)
+  endDate          DateTime? // last occurrence date for a recurring series
+  recurringGroupId String?   // shared id linking all occurrences of one series
+  createdAt        DateTime  @default(now())
 
-model IncomeCategory {
-  id       String   @id @default(cuid())
-  name     String
-  color    String   @default("#22c55e")
-  isActive Boolean  @default(true)
-  incomes  Income[]
-}
-
-model Income {
-  id         String         @id @default(cuid())
-  amount     Float
-  date       DateTime
-  categoryId String
-  category   IncomeCategory @relation(fields: [categoryId], references: [id])
-  accountId  String
-  account    Account        @relation(fields: [accountId], references: [id])
-  note       String?
-  createdAt  DateTime       @default(now())
+  @@index([type])
+  @@index([date])
+  @@index([isRecurring])
+  @@index([recurringGroupId])
 }
 
 model AssetType {

@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { INVESTMENT_TYPES } from "@/lib/finance-types";
 import { z } from "zod";
 
 const schema = z.object({
-  type: z.enum(["stock", "mutual_fund"]),
+  type: z.enum(INVESTMENT_TYPES),
   name: z.string().min(1),
   symbol: z.string().optional(),
   units: z.number().default(0),

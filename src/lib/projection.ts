@@ -16,8 +16,8 @@ export async function getAverageMonthlyIncome(months = DEFAULT_LOOKBACK_MONTHS):
   const end = new Date();
   const start = startOfMonth(subMonths(end, months));
 
-  const result = await prisma.income.aggregate({
-    where: { date: { gte: start, lte: end } },
+  const result = await prisma.transaction.aggregate({
+    where: { type: "income", date: { gte: start, lte: end } },
     _sum: { amount: true },
   });
 
@@ -28,8 +28,8 @@ export async function getAverageMonthlyExpenses(months = DEFAULT_LOOKBACK_MONTHS
   const end = new Date();
   const start = startOfMonth(subMonths(end, months));
 
-  const result = await prisma.expense.aggregate({
-    where: { date: { gte: start, lte: end } },
+  const result = await prisma.transaction.aggregate({
+    where: { type: "expense", date: { gte: start, lte: end } },
     _sum: { amount: true },
   });
 

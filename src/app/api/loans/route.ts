@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { LOAN_TYPES } from "@/lib/finance-types";
 import { z } from "zod";
 
 const schema = z.object({
-  type: z.string().min(1),
+  type: z.enum(LOAN_TYPES),
   lender: z.string().min(1),
   principal: z.number(),
   outstandingBalance: z.number(),

@@ -5,8 +5,8 @@ A local-first personal expense and net worth tracker built with Next.js, SQLite,
 ## Features
 
 - **TOTP login** — Secure access with Google Authenticator, Authy, or similar apps
-- **Expenses** — Add, list, and summarize spending by day, week, month, or year
-- **Income** — Track salary, freelance, dividends, and other income
+- **Transactions** — Add income and expenses in one place; each entry has a type (income/expense) and can be marked recurring (e.g. salary, rent). Totals and budget update with the selected day/week/month/year filter
+- **Fixed income & expenses** — The dashboard summarizes recurring entries into monthly fixed income, fixed expenses, and fixed net
 - **Projection** — Forecast net worth and zero-recovery date based on monthly cash flow
 - **Accounts** — Bank accounts, cash wallets, credit cards, and more
 - **Assets** — Track plots, properties, gold, vehicles, and other assets
@@ -64,11 +64,10 @@ On first visit, you'll be guided through TOTP setup. Scan the QR code with your 
 | `/api/auth/setup` | POST | Generate TOTP secret and QR code |
 | `/api/auth/verify` | POST | Verify TOTP and create session |
 | `/api/auth/logout` | POST | End session |
-| `/api/expenses` | GET, POST | List/create expenses |
-| `/api/income` | GET, POST | List/create income |
-| `/api/income/summary` | GET | Income totals by category |
+| `/api/transactions` | GET, POST | List/create income & expense entries (`?type=`, `?recurring=`, period filters) |
+| `/api/transactions/summary` | GET | Income, expense, and budget totals by category for the selected period |
+| `/api/transactions/recurring` | GET | Monthly fixed income/expense from recurring entries |
 | `/api/projection` | GET | Net worth projection (`?targetDate=YYYY-MM-DD`) |
-| `/api/expenses/summary` | GET | Expense totals by category |
 | `/api/accounts` | GET, POST | List/create accounts |
 | `/api/assets` | GET, POST | List/create assets |
 | `/api/investments` | GET, POST | Stocks and mutual funds |

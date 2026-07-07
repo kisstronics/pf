@@ -35,14 +35,17 @@ const DEFAULT_INCOME_CATEGORIES = [
 
 export async function seedDefaults(prisma: {
   accountType: { createMany: (args: { data: { name: string; icon: string }[] }) => Promise<unknown> };
-  expenseCategory: { createMany: (args: { data: { name: string; color: string }[] }) => Promise<unknown> };
-  incomeCategory: { createMany: (args: { data: { name: string; color: string }[] }) => Promise<unknown> };
+  category: { createMany: (args: { data: { name: string; color: string; type: string }[] }) => Promise<unknown> };
   assetType: { createMany: (args: { data: { name: string }[] }) => Promise<unknown> };
   appSetting: { upsert: (args: { where: { key: string }; create: { key: string; value: string }; update: { value: string } }) => Promise<unknown> };
 }) {
   await prisma.accountType.createMany({ data: DEFAULT_ACCOUNT_TYPES });
-  await prisma.expenseCategory.createMany({ data: DEFAULT_EXPENSE_CATEGORIES });
-  await prisma.incomeCategory.createMany({ data: DEFAULT_INCOME_CATEGORIES });
+  await prisma.category.createMany({
+    data: [
+      ...DEFAULT_EXPENSE_CATEGORIES.map((c) => ({ ...c, type: "expense" })),
+      ...DEFAULT_INCOME_CATEGORIES.map((c) => ({ ...c, type: "income" })),
+    ],
+  });
   await prisma.assetType.createMany({
     data: DEFAULT_ASSET_TYPES.map((name) => ({ name })),
   });

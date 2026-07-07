@@ -17,11 +17,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
+import {
+  INVESTMENT_TYPES,
+  INVESTMENT_TYPE_LABELS,
+  formatInvestmentType,
+  type InvestmentType,
+} from "@/lib/finance-types";
 import { Pencil, Trash2, Plus } from "lucide-react";
 
 interface Investment {
   id: string;
-  type: "stock" | "mutual_fund";
+  type: InvestmentType;
   name: string;
   symbol: string | null;
   units: number;
@@ -32,12 +38,12 @@ interface Investment {
 }
 
 export default function InvestmentsPage() {
-  const [filter, setFilter] = useState<"all" | "stock" | "mutual_fund">("all");
+  const [filter, setFilter] = useState<"all" | InvestmentType>("all");
   const [investments, setInvestments] = useState<Investment[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Investment | null>(null);
   const [form, setForm] = useState({
-    type: "stock" as "stock" | "mutual_fund",
+    type: "stock" as InvestmentType,
     name: "",
     symbol: "",
     units: "",
@@ -127,7 +133,7 @@ export default function InvestmentsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Investments</h1>
-          <p className="text-muted-foreground">Stocks and mutual funds</p>
+          <p className="text-muted-foreground">Stocks, mutual funds, and cash holdings</p>
         </div>
         <Button onClick={() => { resetForm(); setShowForm(true); }}>
           <Plus className="mr-2 h-4 w-4" /> Add Investment
@@ -156,8 +162,11 @@ export default function InvestmentsPage() {
       <Tabs value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
         <TabsList>
           <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="stock">Stocks</TabsTrigger>
-          <TabsTrigger value="mutual_fund">Mutual Funds</TabsTrigger>
+          {INVESTMENT_TYPES.map((type) => (
+            <TabsTrigger key={type} value={type}>
+              {INVESTMENT_TYPE_LABELS[type]}
+            </TabsTrigger>
+          ))}
         </TabsList>
       </Tabs>
 
@@ -170,27 +179,37 @@ export default function InvestmentsPage() {
             <form onSubmit={handleSubmit} className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label>Type</Label>
-                <Select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as "stock" | "mutual_fund" })}>
-                  <option value="stock">Stock</option>
-                  <option value="mutual_fund">Mutual Fund</option>
+                <Select
+                  value={form.type}
+                  onChange={(e) => setForm({ ...form, type: e.target.value as InvestmentType })}
+                >
+                  {INVESTMENT_TYPES.map((type) => (
+                    <option key={type} value={type}>
+                      {INVESTMENT_TYPE_LABELS[type]}
+                    </option>
+                  ))}
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label>Name</Label>
                 <Input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
               </div>
+              {form.type !== "cash" && (
+                <div className="space-y-2">
+                  <Label>{form.type === "stock" ? "Ticker Symbol" : "Folio Number"}</Label>
+                  <Input value={form.symbol} onChange={(e) => setForm({ ...form, symbol: e.target.value })} />
+                </div>
+              )}
               <div className="space-y-2">
-                <Label>{form.type === "stock" ? "Ticker Symbol" : "Folio Number"}</Label>
-                <Input value={form.symbol} onChange={(e) => setForm({ ...form, symbol: e.target.value })} />
-              </div>
-              <div className="space-y-2">
-                <Label>Platform / Broker / AMC</Label>
+                <Label>{form.type === "cash" ? "Bank / Institution" : "Platform / Broker / AMC"}</Label>
                 <Input value={form.platform} onChange={(e) => setForm({ ...form, platform: e.target.value })} />
               </div>
-              <div className="space-y-2">
-                <Label>Units</Label>
-                <Input type="number" step="0.0001" value={form.units} onChange={(e) => setForm({ ...form, units: e.target.value })} />
-              </div>
+              {form.type !== "cash" && (
+                <div className="space-y-2">
+                  <Label>Units</Label>
+                  <Input type="number" step="0.0001" value={form.units} onChange={(e) => setForm({ ...form, units: e.target.value })} />
+                </div>
+              )}
               <div className="space-y-2">
                 <Label>Invested Amount (₹)</Label>
                 <Input type="number" step="0.01" value={form.investedAmount} onChange={(e) => setForm({ ...form, investedAmount: e.target.value })} />
@@ -232,7 +251,7 @@ export default function InvestmentsPage() {
               <TableBody>
                 {investments.map((inv) => (
                   <TableRow key={inv.id}>
-                    <TableCell className="capitalize">{inv.type.replace("_", " ")}</TableCell>
+                    <TableCell>{formatInvestmentType(inv.type)}</TableCell>
                     <TableCell className="font-medium">{inv.name}</TableCell>
                     <TableCell>{inv.symbol || "—"}</TableCell>
                     <TableCell>{inv.units}</TableCell>
