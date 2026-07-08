@@ -2,17 +2,15 @@ import "server-only";
 
 import path from "path";
 import fs from "fs";
-import { execSync } from "child_process";
 import { PrismaClient } from "@prisma/client";
+import { getDataDir, getTemplatePath, getUsersDir } from "./data-dir";
 import { seedDefaults } from "./seed";
 
-const USERS_DIR = path.join(process.cwd(), "prisma", "users");
 const verifiedUsers = new Set<string>();
-
 const clientCache = new Map<string, PrismaClient>();
 
 export function getUserDbPath(userId: string): string {
-  return path.join(USERS_DIR, `${userId}.db`);
+  return path.join(getUsersDir(), `${userId}.db`);
 }
 
 export function getUserDbUrl(userId: string): string {
@@ -61,9 +59,7 @@ async function hasValidSchema(userId: string): Promise<boolean> {
 }
 
 async function initializeUserDatabase(userId: string): Promise<void> {
-  if (!fs.existsSync(USERS_DIR)) {
-    fs.mkdirSync(USERS_DIR, { recursive: true });
-  }
+  fs.mkdirSync(getUsersDir(), { recursive: true });
 
   const dbPath = getUserDbPath(userId);
   disconnectUserPrisma(userId);
@@ -71,19 +67,24 @@ async function initializeUserDatabase(userId: string): Promise<void> {
     fs.unlinkSync(dbPath);
   }
 
-  execSync("npx prisma db push --schema=prisma/schema.prisma --skip-generate", {
-    env: { ...process.env, DATABASE_URL: getUserDbUrl(userId) },
-    stdio: "pipe",
-    cwd: process.cwd(),
-  });
+  const template = getTemplatePath("user");
+  if (!fs.existsSync(template)) {
+    throw new Error(
+      "User database template is missing. Redeploy the app so build templates are generated."
+    );
+  }
+
+  fs.copyFileSync(template, dbPath);
 
   const prisma = getUserPrisma(userId);
-  await seedDefaults(prisma);
   verifiedUsers.add(userId);
 }
 
 export async function ensureUserDatabase(userId: string): Promise<void> {
   if (verifiedUsers.has(userId)) return;
+
+  fs.mkdirSync(getDataDir(), { recursive: true });
+  fs.mkdirSync(getUsersDir(), { recursive: true });
 
   const valid = await hasValidSchema(userId);
   if (!valid) {

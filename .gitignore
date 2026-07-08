@@ -45,3 +45,4 @@ next-env.d.ts
 /prisma/users/
 /prisma/registry.db
 /prisma/registry.db-journal
+/prisma/templates/

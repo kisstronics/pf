@@ -137,6 +137,10 @@ const config = {
         "fromEnvVar": null,
         "value": "darwin-arm64",
         "native": true
+      },
+      {
+        "fromEnvVar": null,
+        "value": "rhel-openssl-3.0.x"
       }
     ],
     "previewFeatures": [],
@@ -154,6 +158,7 @@ const config = {
     "db"
   ],
   "activeProvider": "sqlite",
+  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {
@@ -162,8 +167,8 @@ const config = {
       }
     }
   },
-  "inlineSchema": "generator client {\n  provider = \"prisma-client-js\"\n  output   = \"../src/generated/registry\"\n}\n\ndatasource db {\n  provider = \"sqlite\"\n  url      = env(\"REGISTRY_DATABASE_URL\")\n}\n\nmodel User {\n  id          String   @id @default(cuid())\n  username    String   @unique\n  email       String   @unique\n  phone       String\n  totpSecret  String?\n  totpEnabled Boolean  @default(false)\n  createdAt   DateTime @default(now())\n}\n",
-  "inlineSchemaHash": "1be1aaaa21ce636d78a41078911d2e60cfbcd4fa031a67219f8f693a1ae1f3db",
+  "inlineSchema": "generator client {\n  provider      = \"prisma-client-js\"\n  output        = \"../src/generated/registry\"\n  binaryTargets = [\"native\", \"rhel-openssl-3.0.x\"]\n}\n\ndatasource db {\n  provider = \"sqlite\"\n  url      = env(\"REGISTRY_DATABASE_URL\")\n}\n\nmodel User {\n  id          String   @id @default(cuid())\n  username    String   @unique\n  email       String   @unique\n  phone       String\n  totpSecret  String?\n  totpEnabled Boolean  @default(false)\n  createdAt   DateTime @default(now())\n}\n",
+  "inlineSchemaHash": "543a55c1a483dc2223a7f59c2a58c1046344f37ac52d384333cef88f60a1ac96",
   "copyEngine": true
 }
 
@@ -204,6 +209,10 @@ Object.assign(exports, Prisma)
 // file annotations for bundling tools to include these files
 path.join(__dirname, "libquery_engine-darwin-arm64.dylib.node");
 path.join(process.cwd(), "src/generated/registry/libquery_engine-darwin-arm64.dylib.node")
+
+// file annotations for bundling tools to include these files
+path.join(__dirname, "libquery_engine-rhel-openssl-3.0.x.so.node");
+path.join(process.cwd(), "src/generated/registry/libquery_engine-rhel-openssl-3.0.x.so.node")
 // file annotations for bundling tools to include these files
 path.join(__dirname, "schema.prisma");
 path.join(process.cwd(), "src/generated/registry/schema.prisma")

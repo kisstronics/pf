@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { generateTotpSetup, getUserByUsername, verifyTotpCode } from "@/lib/auth";
-import { registryPrisma } from "@/lib/registry-prisma";
+import { getRegistryPrisma } from "@/lib/registry-prisma";
 import { createUserDatabase, ensureUserDatabase } from "@/lib/user-db";
 import { getSession } from "@/lib/session";
 
@@ -16,6 +16,7 @@ const registerSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  try {
   const body = await request.json();
   const parsed = registerSchema.safeParse(body);
   if (!parsed.success) {
@@ -26,7 +27,7 @@ export async function POST(request: NextRequest) {
   const email = parsed.data.email.toLowerCase().trim();
   const { phone } = parsed.data;
 
-  const existing = await registryPrisma.user.findFirst({
+  const existing = await (await getRegistryPrisma()).user.findFirst({
     where: { OR: [{ username }, { email }] },
   });
   if (existing) {
@@ -38,7 +39,7 @@ export async function POST(request: NextRequest) {
 
   const { secret, qrCode } = await generateTotpSetup(username);
 
-  const user = await registryPrisma.user.create({
+  const user = await (await getRegistryPrisma()).user.create({
     data: {
       username,
       email,
@@ -56,6 +57,13 @@ export async function POST(request: NextRequest) {
     qrCode,
     secret,
   });
+  } catch (err) {
+    console.error("auth/register POST error:", err);
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Registration failed" },
+      { status: 500 }
+    );
+  }
 }
 
 export async function PUT(request: NextRequest) {
@@ -70,7 +78,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: "Invalid registration data" }, { status: 400 });
   }
 
-  const user = await registryPrisma.user.findUnique({ where: { id: userId } });
+  const user = await (await getRegistryPrisma()).user.findUnique({ where: { id: userId } });
   if (!user || user.totpEnabled) {
     return NextResponse.json({ error: "Invalid registration session" }, { status: 400 });
   }
@@ -84,7 +92,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: "Invalid code" }, { status: 401 });
   }
 
-  await registryPrisma.user.update({
+  await (await getRegistryPrisma()).user.update({
     where: { id: userId },
     data: { totpEnabled: true },
   });

@@ -1,6 +1,6 @@
 import { generateSecret, generateURI, verifySync } from "otplib";
 import QRCode from "qrcode";
-import { registryPrisma } from "./registry-prisma";
+import { getRegistryPrisma } from "./registry-prisma";
 
 export async function generateTotpSetup(username: string) {
   const secret = generateSecret();
@@ -23,16 +23,19 @@ export async function verifyTotpCode(secret: string, token: string): Promise<boo
 }
 
 export async function getUserById(id: string) {
+  const registryPrisma = await getRegistryPrisma();
   return registryPrisma.user.findUnique({ where: { id } });
 }
 
 export async function getUserByUsername(username: string) {
+  const registryPrisma = await getRegistryPrisma();
   return registryPrisma.user.findUnique({
     where: { username: username.toLowerCase().trim() },
   });
 }
 
 export async function hasAnyUser(): Promise<boolean> {
+  const registryPrisma = await getRegistryPrisma();
   const count = await registryPrisma.user.count();
   return count > 0;
 }
