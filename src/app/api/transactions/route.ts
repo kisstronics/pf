@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
-import { prisma } from "@/lib/prisma";
+import { getDb } from "@/lib/db";
 import { getDateRange, Period } from "@/lib/period";
 import { generateOccurrenceDates, MAX_OCCURRENCES, Frequency } from "@/lib/recurring";
 import { z } from "zod";
@@ -31,6 +31,7 @@ const createSchema = z
   });
 
 export async function GET(request: NextRequest) {
+  const prisma = await getDb();
   const { searchParams } = new URL(request.url);
   const period = (searchParams.get("period") || "month") as Period;
   const date = searchParams.get("date") || new Date().toISOString().split("T")[0];
@@ -56,6 +57,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const prisma = await getDb();
   const body = await request.json();
   const parsed = createSchema.safeParse(body);
   if (!parsed.success) {

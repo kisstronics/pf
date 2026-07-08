@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { Label } from "@/components/ui/label";
 
 export default function LoginPage() {
   const router = useRouter();
+  const [username, setUsername] = useState("");
   const [token, setToken] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -17,8 +19,8 @@ export default function LoginPage() {
     fetch("/api/auth/status")
       .then((r) => r.json())
       .then((data) => {
-        if (!data.setupComplete) {
-          router.replace("/setup");
+        if (data.isLoggedIn) {
+          router.replace("/");
         }
       });
   }, [router]);
@@ -29,10 +31,10 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/auth/verify", {
-        method: "POST",
+      const res = await fetch("/api/auth/register", {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token }),
+        body: JSON.stringify({ username, token }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -52,10 +54,22 @@ export default function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Login</CardTitle>
-          <CardDescription>Enter the 6-digit code from your authenticator app</CardDescription>
+          <CardDescription>Enter your username and authenticator code</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                required
+                minLength={3}
+                placeholder="johndoe"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                autoFocus
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="token">Authentication code</Label>
               <Input
@@ -67,13 +81,22 @@ export default function LoginPage() {
                 placeholder="000000"
                 value={token}
                 onChange={(e) => setToken(e.target.value.replace(/\D/g, ""))}
-                autoFocus
               />
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" className="w-full" disabled={loading || token.length !== 6}>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={loading || !username || token.length !== 6}
+            >
               {loading ? "Verifying..." : "Login"}
             </Button>
+            <p className="text-center text-sm text-muted-foreground">
+              New here?{" "}
+              <Link href="/register" className="text-primary underline-offset-4 hover:underline">
+                Create an account
+              </Link>
+            </p>
           </form>
         </CardContent>
       </Card>

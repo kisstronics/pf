@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { getDb } from "@/lib/db";
 import { getDateRange, Period } from "@/lib/period";
 
 interface CategoryTotal {
@@ -29,6 +29,7 @@ function byCategory(items: { categoryId: string; amount: number; category: { nam
 }
 
 export async function GET(request: NextRequest) {
+  const prisma = await getDb();
   const { searchParams } = new URL(request.url);
   const period = (searchParams.get("period") || "month") as Period;
   const date = searchParams.get("date") || new Date().toISOString().split("T")[0];

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { getDb } from "@/lib/db";
 import { z } from "zod";
 
 const schema = z.object({
@@ -14,11 +14,13 @@ const schema = z.object({
 });
 
 export async function GET() {
+  const prisma = await getDb();
   const cards = await prisma.creditCard.findMany({ orderBy: { createdAt: "desc" } });
   return NextResponse.json(cards);
 }
 
 export async function POST(request: NextRequest) {
+  const prisma = await getDb();
   const body = await request.json();
   const parsed = schema.safeParse(body);
   if (!parsed.success) {

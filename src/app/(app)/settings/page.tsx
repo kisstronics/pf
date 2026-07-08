@@ -18,7 +18,7 @@ import { Trash2 } from "lucide-react";
 import {
   NETWORTH_CATEGORY_LABELS,
   type NetWorthCategoryKey,
-} from "@/lib/networth-settings";
+} from "@/lib/networth-constants";
 
 interface ConfigItem {
   id: string;
@@ -77,6 +77,8 @@ export default function SettingsPage() {
   const [newAssetType, setNewAssetType] = useState({ name: "" });
   const [networthExclusions, setNetworthExclusions] = useState<NetWorthCategoryKey[]>([]);
   const [savingNetworth, setSavingNetworth] = useState(false);
+  const [excludeDebtInterest, setExcludeDebtInterest] = useState(false);
+  const [savingProjection, setSavingProjection] = useState(false);
   const [resetting, setResetting] = useState<null | "transactions_accounts" | "factory">(null);
 
   function loadAll() {
@@ -87,6 +89,9 @@ export default function SettingsPage() {
     fetch("/api/settings/networth")
       .then((r) => r.json())
       .then((data) => setNetworthExclusions(data.exclusions ?? []));
+    fetch("/api/settings/projection")
+      .then((r) => r.json())
+      .then((data) => setExcludeDebtInterest(data.excludeDebtInterest ?? false));
   }
 
   useEffect(() => { loadAll(); }, []);
@@ -160,6 +165,19 @@ export default function SettingsPage() {
     }
   }
 
+  async function saveProjectionSettings() {
+    setSavingProjection(true);
+    try {
+      await fetch("/api/settings/projection", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ excludeDebtInterest }),
+      });
+    } finally {
+      setSavingProjection(false);
+    }
+  }
+
   async function runReset(scope: "transactions_accounts" | "factory") {
     const message =
       scope === "transactions_accounts"
@@ -196,6 +214,7 @@ export default function SettingsPage() {
           <TabsTrigger value="income-categories">Income Categories</TabsTrigger>
           <TabsTrigger value="asset-types">Asset Types</TabsTrigger>
           <TabsTrigger value="networth">Net Worth</TabsTrigger>
+          <TabsTrigger value="projection">Projection</TabsTrigger>
           <TabsTrigger value="data">Data</TabsTrigger>
         </TabsList>
 
@@ -404,8 +423,108 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="projection">
+          <Card>
+            <CardHeader>
+              <CardTitle>Zero Date Analysis</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Controls how debt is modelled in projections and the zero net worth date.
+              </p>
+              <label className="flex cursor-pointer items-center justify-between gap-4 rounded-md border border-border px-4 py-3">
+                <div>
+                  <p className="font-medium">Exclude debt interest</p>
+                  <p className="text-sm text-muted-foreground">
+                    When enabled, projections pay down debt principal only — no additional
+                    interest is compounded. Use this if loan interest is already recorded in
+                    your expenses (e.g. EMI interest portion), so it is not double-counted.
+                  </p>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={excludeDebtInterest}
+                  onChange={(e) => setExcludeDebtInterest(e.target.checked)}
+                  className="shrink-0"
+                />
+              </label>
+              <Button onClick={saveProjectionSettings} disabled={savingProjection}>
+                {savingProjection ? "Saving..." : "Save Projection Settings"}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="data">
-          <Card className="border-destructive/40">
+          <Card>
+            <CardHeader>
+              <CardTitle>Backup & Restore</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex flex-col gap-3 rounded-md border border-border p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="font-medium">Export data</p>
+                  <p className="text-sm text-muted-foreground">
+                    Download a JSON backup of all your financial data for this account.
+                  </p>
+                </div>
+                <a
+                  href="/api/settings/export"
+                  className="inline-flex h-10 items-center justify-center rounded-md border border-border bg-transparent px-4 py-2 text-sm font-medium transition-colors hover:bg-accent"
+                >
+                  Export backup
+                </a>
+              </div>
+
+              <div className="rounded-md border border-border p-4 space-y-3">
+                <div>
+                  <p className="font-medium">Import data</p>
+                  <p className="text-sm text-muted-foreground">
+                    Restore from a previously exported JSON backup. This replaces all current data
+                    in your account.
+                  </p>
+                </div>
+                <Input
+                  type="file"
+                  accept="application/json,.json"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    if (
+                      !confirm(
+                        "Import will replace ALL current data in your account. Continue?"
+                      )
+                    ) {
+                      e.target.value = "";
+                      return;
+                    }
+                    const text = await file.text();
+                    try {
+                      const payload = JSON.parse(text);
+                      const res = await fetch("/api/settings/export", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload),
+                      });
+                      const data = await res.json();
+                      if (!res.ok) {
+                        alert(data.error || "Import failed");
+                        return;
+                      }
+                      loadAll();
+                      alert("Data restored successfully.");
+                    } catch {
+                      alert("Invalid backup file");
+                    } finally {
+                      e.target.value = "";
+                    }
+                  }}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="mt-6 border-destructive/40">
             <CardHeader>
               <CardTitle>Danger Zone</CardTitle>
             </CardHeader>

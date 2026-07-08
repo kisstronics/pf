@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { getDb } from "@/lib/db";
 import { z } from "zod";
 
 const schema = z.object({
@@ -17,6 +17,7 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const prisma = await getDb();
   const { id } = await params;
   const card = await prisma.creditCard.findUnique({ where: { id } });
   if (!card) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -27,6 +28,7 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const prisma = await getDb();
   const { id } = await params;
   const body = await request.json();
   const parsed = schema.safeParse(body);
@@ -41,6 +43,7 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const prisma = await getDb();
   const { id } = await params;
   await prisma.creditCard.delete({ where: { id } });
   return NextResponse.json({ success: true });

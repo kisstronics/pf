@@ -1,5 +1,7 @@
 import { addDays, addWeeks, addMonths, addYears, isAfter } from "date-fns";
-import { prisma } from "./prisma";
+import "server-only";
+
+import { getDb } from "./db";
 
 export type Frequency = "daily" | "weekly" | "monthly" | "yearly";
 
@@ -72,6 +74,7 @@ export interface FixedSummary {
 }
 
 export async function getFixedFlows(): Promise<FixedSummary> {
+  const prisma = await getDb();
   const allRecurring = await prisma.transaction.findMany({
     where: { isRecurring: true },
     include: { category: true, account: true },

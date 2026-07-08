@@ -7,8 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "db:migrate": "prisma migrate dev",
-    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev --schema=prisma/schema.prisma",
+    "db:migrate:registry": "prisma migrate dev --schema=prisma/schema-registry.prisma",
+    "db:generate": "prisma generate --schema=prisma/schema.prisma && prisma generate --schema=prisma/schema-registry.prisma",
     "db:studio": "prisma studio"
   },
   "dependencies": {
@@ -25,6 +26,7 @@
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "recharts": "^3.9.2",
+    "server-only": "^0.0.1",
     "tailwind-merge": "^3.6.0",
     "zod": "^4.4.3"
   },

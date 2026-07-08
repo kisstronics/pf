@@ -1,19 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { PrismaClient } from "@prisma/client";
+import { getDb } from "@/lib/db";
 import { seedDefaults } from "@/lib/seed";
 
 type ResetScope = "transactions_accounts" | "factory";
 
-// Clears transactions then accounts (transactions reference accounts).
-async function clearTransactionsAndAccounts() {
+async function clearTransactionsAndAccounts(prisma: PrismaClient) {
   await prisma.transaction.deleteMany();
   await prisma.account.deleteMany();
 }
 
-// Wipes all financial data + settings, then reseeds defaults.
-// The User (TOTP credentials) is intentionally preserved so the user stays
-// logged in and doesn't have to re-run authenticator setup.
-async function factoryReset() {
+async function factoryReset(prisma: PrismaClient) {
   await prisma.transaction.deleteMany();
   await prisma.account.deleteMany();
   await prisma.category.deleteMany();
@@ -34,6 +31,7 @@ async function factoryReset() {
 }
 
 export async function POST(request: NextRequest) {
+  const prisma = await getDb();
   const body = await request.json().catch(() => ({}));
   const scope = (body as { scope?: ResetScope }).scope;
 
@@ -45,10 +43,10 @@ export async function POST(request: NextRequest) {
   }
 
   if (scope === "transactions_accounts") {
-    await clearTransactionsAndAccounts();
+    await clearTransactionsAndAccounts(prisma);
     return NextResponse.json({ success: true, scope });
   }
 
-  await factoryReset();
+  await factoryReset(prisma);
   return NextResponse.json({ success: true, scope });
 }

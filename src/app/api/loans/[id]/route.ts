@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { getDb } from "@/lib/db";
 import { LOAN_TYPES } from "@/lib/finance-types";
 import { z } from "zod";
 
@@ -19,6 +19,7 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const prisma = await getDb();
   const { id } = await params;
   const loan = await prisma.loan.findUnique({ where: { id } });
   if (!loan) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -29,6 +30,7 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const prisma = await getDb();
   const { id } = await params;
   const body = await request.json();
   const parsed = schema.safeParse(body);
@@ -50,6 +52,7 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const prisma = await getDb();
   const { id } = await params;
   await prisma.loan.delete({ where: { id } });
   return NextResponse.json({ success: true });

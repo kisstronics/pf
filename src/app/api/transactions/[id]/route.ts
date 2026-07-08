@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { getDb } from "@/lib/db";
 import { z } from "zod";
 
 const updateSchema = z.object({
@@ -22,6 +22,7 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const prisma = await getDb();
   const { id } = await params;
   const transaction = await prisma.transaction.findUnique({
     where: { id },
@@ -35,6 +36,7 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const prisma = await getDb();
   const { id } = await params;
   const body = await request.json();
   const parsed = updateSchema.safeParse(body);
@@ -86,6 +88,7 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const prisma = await getDb();
   const { id } = await params;
   const { searchParams } = new URL(request.url);
   const scope = searchParams.get("scope"); // "group" deletes the whole recurring series

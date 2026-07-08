@@ -1,12 +1,12 @@
 import { generateSecret, generateURI, verifySync } from "otplib";
 import QRCode from "qrcode";
-import { prisma } from "./prisma";
+import { registryPrisma } from "./registry-prisma";
 
-export async function generateTotpSetup() {
+export async function generateTotpSetup(username: string) {
   const secret = generateSecret();
   const otpauth = generateURI({
     issuer: "PersonalFinance",
-    label: "finance@local",
+    label: username,
     secret,
   });
   const qrCode = await QRCode.toDataURL(otpauth);
@@ -22,11 +22,17 @@ export async function verifyTotpCode(secret: string, token: string): Promise<boo
   }
 }
 
-export async function getUser() {
-  return prisma.user.findFirst();
+export async function getUserById(id: string) {
+  return registryPrisma.user.findUnique({ where: { id } });
 }
 
-export async function isSetupComplete(): Promise<boolean> {
-  const user = await getUser();
-  return !!user?.totpEnabled;
+export async function getUserByUsername(username: string) {
+  return registryPrisma.user.findUnique({
+    where: { username: username.toLowerCase().trim() },
+  });
+}
+
+export async function hasAnyUser(): Promise<boolean> {
+  const count = await registryPrisma.user.count();
+  return count > 0;
 }

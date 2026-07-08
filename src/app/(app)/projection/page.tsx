@@ -34,6 +34,10 @@ interface ProjectionData {
   monthsToZero: number | null;
   zeroDateMessage: string;
   isNegative: boolean;
+  totalDebt: number;
+  monthlyDebtInterest: number;
+  weightedAnnualDebtRate: number;
+  excludeDebtInterest: boolean;
 }
 
 export default function ProjectionPage() {
@@ -83,7 +87,8 @@ export default function ProjectionPage() {
         <CardHeader>
           <CardTitle>Projection Settings</CardTitle>
           <CardDescription>
-            Monthly averages are computed from the last 3 months of income and expense data
+            Monthly income and expenses come from your recurring (fixed) transactions — the same
+            figures shown on the dashboard. Override them below to model a different scenario.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -207,16 +212,40 @@ export default function ProjectionPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm">{data.zeroDateMessage}</p>
+
+              <div className="mt-3 grid gap-2 text-sm text-muted-foreground sm:grid-cols-3">
+                <span>Total debt: {formatCurrency(data.totalDebt)}</span>
+                <span>
+                  Monthly debt interest: {formatCurrency(data.monthlyDebtInterest)}
+                  {data.excludeDebtInterest && " (excluded from simulation)"}
+                </span>
+                <span>
+                  Avg. debt rate: {data.weightedAnnualDebtRate.toFixed(2)}% p.a.
+                </span>
+              </div>
+
+              {data.excludeDebtInterest && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Debt interest is excluded from the simulation because it is already counted in
+                  your expenses. Only principal is paid down each month.
+                </p>
+              )}
+
               {data.isNegative && data.zeroDate && (
-                <p className="mt-2 text-sm text-muted-foreground">
-                  With a monthly surplus of {formatCurrency(data.monthlyNetFlow)}, your net worth
-                  is projected to recover from {formatCurrency(data.currentNetWorth)} to ₹0 by{" "}
-                  <strong>{formatDate(data.zeroDate)}</strong>.
+                <p className="mt-3 text-sm text-muted-foreground">
+                  With a monthly surplus of {formatCurrency(data.monthlyNetFlow)},
+                  {data.excludeDebtInterest
+                    ? " paying down debt principal (interest excluded),"
+                    : ` after covering ${formatCurrency(data.monthlyDebtInterest)} of debt interest each month,`}{" "}
+                  your net worth is projected to recover from {formatCurrency(data.currentNetWorth)}{" "}
+                  to ₹0 by <strong>{formatDate(data.zeroDate)}</strong>.
                 </p>
               )}
               {data.isNegative && !data.zeroDate && (
-                <p className="mt-2 text-sm text-destructive">
-                  Your expenses exceed or equal your income. Net worth will continue declining.
+                <p className="mt-3 text-sm text-destructive">
+                  {data.monthlyNetFlow > 0
+                    ? "Your monthly surplus is not enough to outpace debt interest, so the debt keeps growing."
+                    : "Your expenses meet or exceed your income, so there's nothing to pay down debt."}
                 </p>
               )}
             </CardContent>
@@ -227,6 +256,9 @@ export default function ProjectionPage() {
               <CardTitle>Projection Timeline</CardTitle>
               <CardDescription>
                 Net worth trajectory over {data.monthsToTarget} months
+                {data.excludeDebtInterest
+                  ? ", paying down debt principal (interest excluded)"
+                  : ", with the monthly surplus paying down interest-bearing debt"}
               </CardDescription>
             </CardHeader>
             <CardContent className="h-80">

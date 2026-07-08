@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { getDb } from "@/lib/db";
 import { LOAN_TYPES } from "@/lib/finance-types";
 import { z } from "zod";
 
@@ -16,6 +16,7 @@ const schema = z.object({
 });
 
 export async function GET(request: NextRequest) {
+  const prisma = await getDb();
   const { searchParams } = new URL(request.url);
   const type = searchParams.get("type");
   const loans = await prisma.loan.findMany({
@@ -26,6 +27,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const prisma = await getDb();
   const body = await request.json();
   const parsed = schema.safeParse(body);
   if (!parsed.success) {

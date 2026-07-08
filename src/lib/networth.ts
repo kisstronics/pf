@@ -1,4 +1,6 @@
-import { prisma } from "./prisma";
+import "server-only";
+
+import { getDb } from "./db";
 import { getNetWorthExclusions, type NetWorthCategoryKey } from "./networth-settings";
 
 export interface NetWorthSnapshot {
@@ -19,6 +21,7 @@ export interface NetWorthSnapshot {
 }
 
 export async function calculateNetWorth(): Promise<NetWorthSnapshot> {
+  const prisma = await getDb();
   const exclusions = await getNetWorthExclusions();
   const excluded = new Set(exclusions);
 

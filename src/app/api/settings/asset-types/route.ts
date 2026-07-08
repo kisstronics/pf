@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { getDb } from "@/lib/db";
 import { z } from "zod";
 
 const schema = z.object({
@@ -8,11 +8,13 @@ const schema = z.object({
 });
 
 export async function GET() {
+  const prisma = await getDb();
   const items = await prisma.assetType.findMany({ orderBy: { name: "asc" } });
   return NextResponse.json(items);
 }
 
 export async function POST(request: NextRequest) {
+  const prisma = await getDb();
   const body = await request.json();
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
@@ -25,6 +27,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+  const prisma = await getDb();
   const body = await request.json();
   const { id, ...rest } = body as { id: string; name?: string; isActive?: boolean };
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
@@ -33,6 +36,7 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const prisma = await getDb();
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });

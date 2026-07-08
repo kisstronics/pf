@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency, cn } from "@/lib/utils";
-import { NETWORTH_CATEGORY_LABELS, type NetWorthCategoryKey } from "@/lib/networth-settings";
+import { NETWORTH_CATEGORY_LABELS, type NetWorthCategoryKey } from "@/lib/networth-constants";
 import { TrendingUp } from "lucide-react";
 
 interface NetWorthData {
